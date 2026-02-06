@@ -3,6 +3,8 @@ import Airtable from 'airtable';
 // Initialize Airtable
 const baseId = process.env.AIRTABLE_BASE_ID;
 const apiKey = process.env.AIRTABLE_API_KEY;
+const eventsTableId = process.env.AIRTABLE_EVENTS_TABLE_ID;
+const blogTableId = process.env.AIRTABLE_BLOG_TABLE_ID;
 
 // Fail gracefully if keys are not present (during build or dev without keys)
 const base = (baseId && apiKey)
@@ -111,13 +113,13 @@ We heavily invested in pilot programs...
 ];
 
 export async function getEvents(): Promise<Event[]> {
-    if (!base) {
-        console.warn("Airtable credentials missing, using mock data for Events.");
+    if (!base || !eventsTableId) {
+        console.warn("Airtable credentials or table ID missing, using mock data for Events.");
         return MOCK_EVENTS;
     }
 
     try {
-        const records = await base('tblvheiIIRrsZniqb').select({
+        const records = await base(eventsTableId).select({
             sort: [{ field: 'Date', direction: 'asc' }],
             filterByFormula: "IS_AFTER({Date}, TODAY())" // Only future events
         }).all();
@@ -140,17 +142,17 @@ export async function getEvents(): Promise<Event[]> {
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
     console.log("Starting getBlogPosts...");
-    if (!base) {
-        console.warn("Airtable credentials missing (base is null), using mock data for Blog.");
+    if (!base || !blogTableId) {
+        console.warn("Airtable credentials or table ID missing (base is null), using mock data for Blog.");
         // Debug which key is missing without revealing them fully
-        console.log(`BaseID configured: ${!!baseId}, API Key configured: ${!!apiKey}`);
+        console.log(`BaseID configured: ${!!baseId}, API Key configured: ${!!apiKey}, BlogTableID configured: ${!!blogTableId}`);
         return MOCK_NEWS;
     }
 
     try {
         // Removed status filter for debugging: filterByFormula: "{Status} = 'Published'"
-        console.log("Querying Airtable table 'tblYtObsdcK8lmfg7' for ALL posts (Debug Mode)...");
-        const records = await base('tblYtObsdcK8lmfg7').select({
+        console.log(`Querying Airtable table '${blogTableId}' for ALL posts (Debug Mode)...`);
+        const records = await base(blogTableId).select({
             sort: [{ field: 'Date', direction: 'desc' }],
         }).all();
 
@@ -166,7 +168,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-    if (!base) {
+    if (!base || !blogTableId) {
         // Mock fallback by slug
         return MOCK_NEWS.find(p => p.slug === slug) || null;
     }
@@ -176,7 +178,7 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
         console.log(`[DEBUG] Fetching blog post for slug: "${decodedSlug}" (Original: "${slug}")`);
 
         // We fetch by slug but remove status check for now to be safe
-        const records = await base('tblYtObsdcK8lmfg7').select({
+        const records = await base(blogTableId).select({
             filterByFormula: `{Slug} = '${decodedSlug}'`,
             maxRecords: 1
         }).firstPage();
