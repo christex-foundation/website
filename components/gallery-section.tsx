@@ -67,10 +67,9 @@ export function GallerySection({ images = defaultImages }: { images?: string[] }
     // Use provided images effectively
     const displayImages = images.length > 0 ? images : defaultImages
 
-    // Create 2 rows of data
-    // If we have very few images, we might want to duplicate them more to fill the row
-    const row1 = displayImages
-    const row2 = [...displayImages.slice(Math.floor(displayImages.length / 2)), ...displayImages.slice(0, Math.floor(displayImages.length / 2))]
+    // Split images into two interleaved sets for better distribution of similar photos
+    const row1 = displayImages.filter((_: string, i: number) => i % 2 === 0)
+    const row2 = displayImages.filter((_: string, i: number) => i % 2 === 1).reverse()
 
     return (
         <section ref={containerRef} className="py-24 bg-background border-t border-border overflow-hidden">

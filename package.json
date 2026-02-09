@@ -6,6 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
+    "gallery:process": "./scripts/process-gallery.sh",
     "start": "next start"
   },
   "dependencies": {

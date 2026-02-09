@@ -5,6 +5,7 @@ const baseId = process.env.AIRTABLE_BASE_ID;
 const apiKey = process.env.AIRTABLE_API_KEY;
 const eventsTableId = process.env.AIRTABLE_EVENTS_TABLE_ID;
 const blogTableId = process.env.AIRTABLE_BLOG_TABLE_ID;
+const galleryTableId = process.env.AIRTABLE_GALLERY_TABLE_ID;
 
 // Fail gracefully if keys are not present (during build or dev without keys)
 const base = (baseId && apiKey)
@@ -137,6 +138,55 @@ export async function getEvents(): Promise<Event[]> {
     } catch (error) {
         console.error("Error fetching events from Airtable:", error);
         return MOCK_EVENTS;
+    }
+}
+
+export async function getGalleryImages(): Promise<string[]> {
+    if (!base || !galleryTableId) {
+        return [];
+    }
+
+    try {
+        const records = await base(galleryTableId).select({
+            maxRecords: 100,
+            view: "Grid view" // Optional: specify a view if needed
+        }).all();
+
+        // Extract all images from all records
+        const images: string[] = [];
+        records.forEach(record => {
+            const attachments = record.get('Images') as any[];
+            if (attachments && Array.isArray(attachments)) {
+                attachments.forEach(photo => {
+                    // Prioritize web-safe thumbnails if available (handles HEIC/DNG conversion automatically)
+                    const thumbnailUrl = photo.thumbnails?.full?.url ||
+                        photo.thumbnails?.large?.url ||
+                        photo.thumbnails?.small?.url;
+
+                    if (thumbnailUrl) {
+                        images.push(thumbnailUrl);
+                    } else {
+                        // If no thumbnails exist (common for raw files like DNG/HEIC that Airtable hasn't processed yet),
+                        // we MUST filter out non-web formats to avoid broken images on the frontend.
+                        // Only allow fallback to raw URL for natively supported web formats.
+                        const filename = photo.filename || '';
+                        const type = photo.type || '';
+
+                        const isWebSafe = /\.(jpg|jpeg|png|gif|webp)$/i.test(filename) ||
+                            /image\/(jpeg|png|gif|webp)/.test(type);
+
+                        if (isWebSafe && photo.url) {
+                            images.push(photo.url);
+                        }
+                    }
+                });
+            }
+        });
+
+        return images;
+    } catch (error) {
+        console.error("Error fetching gallery images from Airtable:", error);
+        return [];
     }
 }
 

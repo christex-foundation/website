@@ -12,7 +12,34 @@ import { Footer } from "@/components/footer"
 import fs from "fs"
 import path from "path"
 
-export default function HomePage() {
+import { getGalleryImages } from "@/lib/airtable"
+
+export default async function HomePage() {
+  let galleryImages: string[] = []
+
+  // Try to fetch from Airtable first
+  try {
+    const remoteImages = await getGalleryImages()
+    if (remoteImages.length > 0) {
+      galleryImages = remoteImages
+    }
+  } catch (e) {
+    console.error("Failed to fetch gallery from Airtable", e)
+  }
+
+  // Fallback to local file system if needed (and available server-side)
+  if (galleryImages.length === 0) {
+    try {
+      const galleryDir = path.join(process.cwd(), "public/images/gallery")
+      if (fs.existsSync(galleryDir)) {
+        const files = fs.readdirSync(galleryDir).filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file))
+        galleryImages = files.map(file => `/images/gallery/${file}`)
+      }
+    } catch (e) {
+      // Local fallback failed too, empty array will trigger default images in component
+    }
+  }
+
   return (
     <main className="min-h-screen bg-background">
       <Header />
@@ -24,18 +51,7 @@ export default function HomePage() {
       <VentureStudioSection />
       <PartnersSection />
       <ContactSection />
-      {/* Read images from public/images/gallery if available */}
-      {(() => {
-        try {
-          const galleryDir = path.join(process.cwd(), "public/images/gallery")
-          const files = fs.readdirSync(galleryDir).filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file))
-          const localImages = files.map(file => `/images/gallery/${file}`)
-          return <GallerySection images={localImages.length > 0 ? localImages : undefined} />
-        } catch (e) {
-          // Fallback to default images if directory doesn't exist or error
-          return <GallerySection />
-        }
-      })()}
+      <GallerySection images={galleryImages.length > 0 ? galleryImages : undefined} />
       <Footer />
     </main>
   )
