@@ -134,11 +134,11 @@ export function BlockchainParallax() {
     <motion.div
       ref={containerRef}
       style={isMobile ? {} : { opacity, scale }}
-      className="relative py-32 overflow-hidden"
+      className="relative py-8 lg:py-32 overflow-hidden hidden lg:block"
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         {/* Section Header */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-8 lg:mb-20">
           <span className="font-mono text-[10px] tracking-[0.3em] text-muted-foreground uppercase">
             Real-Time Consensus
           </span>
@@ -146,7 +146,7 @@ export function BlockchainParallax() {
         </div>
 
         {/* Main Visualization */}
-        <div className="relative h-[400px] lg:h-[400px] flex items-center justify-center">
+        <div className="relative h-[200px] lg:h-[400px] flex items-center justify-center">
           {/* Transaction Particles - hidden on mobile */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-20 hidden lg:block">
             {!isMobile && validationPhase === "collecting" && (
@@ -182,13 +182,12 @@ export function BlockchainParallax() {
             )}
 
             <div
-              className={`relative w-40 h-48 rounded-xl border-2 transition-all duration-500 ${
-                isMobile || validationPhase === "confirmed"
-                  ? "border-[#00ff88] bg-[#00ff88]/10"
-                  : validationPhase === "validating"
-                    ? "border-foreground/60 bg-foreground/5"
-                    : "border-border bg-secondary/20"
-              }`}
+              className={`relative w-40 h-48 rounded-xl border-2 transition-all duration-500 ${isMobile || validationPhase === "confirmed"
+                ? "border-[#00ff88] bg-[#00ff88]/10"
+                : validationPhase === "validating"
+                  ? "border-foreground/60 bg-foreground/5"
+                  : "border-border bg-secondary/20"
+                }`}
             >
               {/* Block content */}
               <div className="p-4 h-full flex flex-col">
@@ -217,13 +216,12 @@ export function BlockchainParallax() {
                   {[...Array(8)].map((_, i) => (
                     <div
                       key={i}
-                      className={`h-2 rounded-sm transition-all duration-300 ${
-                        isMobile || validationPhase === "validating" || validationPhase === "confirmed"
+                      className={`h-2 rounded-sm transition-all duration-300 ${isMobile || validationPhase === "validating" || validationPhase === "confirmed"
+                        ? "bg-foreground/60"
+                        : validationPhase === "collecting" && i < 4
                           ? "bg-foreground/60"
-                          : validationPhase === "collecting" && i < 4
-                            ? "bg-foreground/60"
-                            : "bg-border/30"
-                      }`}
+                          : "bg-border/30"
+                        }`}
                       style={{
                         transitionDelay: `${i * 50}ms`,
                       }}
@@ -234,13 +232,12 @@ export function BlockchainParallax() {
 
               {/* Status indicator */}
               <div
-                className={`absolute -top-3 right-4 px-2 py-0.5 rounded text-[8px] font-mono tracking-wider ${
-                  isMobile || validationPhase === "confirmed"
-                    ? "bg-[#00ff88] text-background"
-                    : validationPhase === "validating"
-                      ? "bg-foreground text-background"
-                      : "bg-secondary text-muted-foreground"
-                }`}
+                className={`absolute -top-3 right-4 px-2 py-0.5 rounded text-[8px] font-mono tracking-wider ${isMobile || validationPhase === "confirmed"
+                  ? "bg-[#00ff88] text-background"
+                  : validationPhase === "validating"
+                    ? "bg-foreground text-background"
+                    : "bg-secondary text-muted-foreground"
+                  }`}
               >
                 {isMobile ? (
                   "CONFIRMED"
@@ -277,11 +274,10 @@ export function BlockchainParallax() {
                   }}
                 >
                   <div
-                    className={`w-12 h-14 rounded border flex items-center justify-center transition-all duration-500 ${
-                      block.id === blocks[blocks.length - 1]?.id && validationPhase === "confirmed"
-                        ? "border-[#00ff88]/80 bg-[#00ff88]/20"
-                        : "border-[#00ff88]/30 bg-[#00ff88]/5"
-                    }`}
+                    className={`w-12 h-14 rounded border flex items-center justify-center transition-all duration-500 ${block.id === blocks[blocks.length - 1]?.id && validationPhase === "confirmed"
+                      ? "border-[#00ff88]/80 bg-[#00ff88]/20"
+                      : "border-[#00ff88]/30 bg-[#00ff88]/5"
+                      }`}
                   >
                     <span className="font-mono text-[8px] text-foreground/60">#{block.id}</span>
                   </div>
@@ -311,7 +307,7 @@ export function BlockchainParallax() {
         </div>
 
         {/* Stats - simplified layout on mobile */}
-        <div className="mt-16 grid grid-cols-3 gap-4 lg:gap-8 max-w-2xl mx-auto">
+        <div className="mt-8 lg:mt-16 grid grid-cols-3 gap-4 lg:gap-8 max-w-2xl mx-auto">
           {[
             { label: "Block Time", value: "~10s" },
             { label: "Blocks Added", value: totalBlocks.toString() },

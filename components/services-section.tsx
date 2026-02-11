@@ -65,7 +65,7 @@ export function ServicesSection() {
   const isMobile = useIsMobile()
 
   return (
-    <section id="services" ref={ref} className="py-32 bg-background relative">
+    <section id="services" ref={ref} className="py-16 lg:py-32 bg-background relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         {/* Section Header */}
         <motion.div
@@ -174,6 +174,9 @@ export function ServicesSection() {
       {/* Background Decor - moved to end and removed overflow-hidden for seamless blend */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute -bottom-48 right-0 w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none mix-blend-screen" />
+
+      {/* Gradient fade for smooth mobile transition */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-background pointer-events-none lg:hidden" />
     </section>
   )
 }
