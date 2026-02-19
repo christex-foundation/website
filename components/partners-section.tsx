@@ -6,6 +6,7 @@ import { useRef } from "react"
 
 const partners = [
   { name: "Solana Foundation", type: "Technology" },
+  { name: "Sign", type: "Blockchain for Government" },
   { name: "UNICEF", type: "Development" },
   { name: "UNDP", type: "Development" },
   { name: "Ministry of Communication, Technology & Innovation", type: "Government" },
