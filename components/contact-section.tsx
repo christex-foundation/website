@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { useInView } from "framer-motion"
 import { useRef, useState, useEffect } from "react"
-import { ArrowUpRight, Mail, MapPin, Wallet, GraduationCap, Building2, Server } from "lucide-react"
+import { ArrowUpRight, Mail, MapPin, Rocket, Briefcase, Shield, GraduationCap } from "lucide-react"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false)
@@ -27,28 +27,28 @@ export function ContactSection() {
 
   const collaborationAreas = [
     {
-      title: "Fund Education",
-      description: "Co-design scalable digital skills training across Sierra Leone.",
-      icon: GraduationCap,
-      label: "EDUCATION & AI",
-    },
-    {
-      title: "Startup Incubation",
-      description: "Launch startup challenges through our venture studio.",
-      icon: Wallet,
+      title: "The Founders Pathway",
+      description: "12-month programme building 10 ventures per cohort. $35K staged capital per startup, workspace, mentorship, and regional market access.",
+      icon: Rocket,
       label: "VENTURE BUILDING",
     },
     {
-      title: "CivicTech Initiatives",
-      description: "Support DPG-aligned projects and public sector transformation.",
-      icon: Building2,
-      label: "GOV & POLICY",
+      title: "Future of Work Platform",
+      description: "Scaling Sierra Leone\u2019s first digital employment marketplace. $42K distributed in pilot. Ready for institutional backing.",
+      icon: Briefcase,
+      label: "DIGITAL LIVELIHOODS",
     },
     {
-      title: "Infrastructure",
-      description: "Back core infrastructure for financial inclusion and IP protection.",
-      icon: Server,
-      label: "CORE INFRA",
+      title: "Sovereign Infrastructure",
+      description: "Technical partner for national digital identity, payments, and capital markets under the SIGN-MoCTI partnership.",
+      icon: Shield,
+      label: "GOV & BLOCKCHAIN",
+    },
+    {
+      title: "Education & Community",
+      description: "Co-design scalable digital skills training. Fund hackathons, bounty programmes, and the Sinai mentorship initiative.",
+      icon: GraduationCap,
+      label: "SKILLS & HUB",
     },
   ]
 

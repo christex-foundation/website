@@ -6,9 +6,13 @@ import { useRef } from "react"
 
 const partners = [
   { name: "Solana Foundation", type: "Technology" },
+  { name: "SIGN Foundation", type: "Infrastructure" },
   { name: "UNICEF", type: "Development" },
   { name: "UNDP", type: "Development" },
+  { name: "World Bank", type: "Development" },
+  { name: "ITC / KOICA", type: "Development" },
   { name: "Ministry of Communication, Technology & Innovation", type: "Government" },
+  { name: "Bank of Sierra Leone", type: "Government" },
   { name: "Ministry of Youth Affairs", type: "Government" },
   { name: "DSTI", type: "Government" },
   { name: "University of Sierra Leone", type: "Education" },

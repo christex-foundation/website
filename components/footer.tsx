@@ -13,13 +13,16 @@ const footerLinks = {
   ventures: [
     { label: "Mocha", href: "https://www.getmocha.io/" },
     { label: "SendMe", href: "https://sendmesl.com/" },
-    { label: "DPG pipeline", href: "https://launch.publicgood.dev/" },
+    { label: "DPG Pipeline", href: "https://launch.publicgood.dev/" },
+    { label: "Geneline-X", href: "#ventures" },
+    { label: "BitChat", href: "#ventures" },
+    { label: "Future of Work", href: "#ventures" },
   ],
   resources: [
     { label: "About Us", href: "#about" },
     { label: "Partners", href: "#partners" },
-    { label: "Bounty Programme", href: "#" },
-    { label: "Open Learning", href: "#" },
+    { label: "Blog", href: "/blog" },
+    { label: "Events", href: "/events" },
     {
       label: "Media Kit",
       href: "https://drive.google.com/drive/folders/1duceU8Oi9rRBeEcQL8e5IBJpCfZ7734b?usp=sharing",
@@ -51,7 +54,7 @@ export function Footer() {
             </p>
             <p className="font-mono text-xs text-muted-foreground mb-6">Freetown, Sierra Leone</p>
             <div className="font-mono text-xs text-muted-foreground">
-              © 2025 Christex Foundation. All rights reserved.
+              © 2026 Christex Foundation. All rights reserved.
             </div>
           </div>
 

@@ -47,18 +47,18 @@ export function AboutSection() {
             </div>
 
             <h2 className="text-4xl md:text-5xl font-light text-foreground mb-8 text-balance leading-tight">
-              Driving digital transformation in <span className="text-muted-foreground">Sierra Leone</span>.
+              Building the infrastructure <span className="text-muted-foreground">Sierra Leone needs</span>.
             </h2>
 
             <div className="space-y-6 text-muted-foreground leading-relaxed text-lg font-light">
               <p>
-                Founded in 2022, Christex Foundation equips Sierra Leone with the skills and infrastructure needed to thrive in the global digital economy.
+                75% of Sierra Leone&apos;s population is under 35 — one of the youngest in the world. 70% of youth are underemployed. There&apos;s no digital job platform. No accelerator. No VC fund. Companies hire through WhatsApp flyers. International payment services like PayPal don&apos;t operate here.
               </p>
               <p>
-                With a special focus on <span className="text-foreground">AI and blockchain</span>, we deliver grassroots programmes that prepare technical talent and build sustainable startups.
+                Christex Foundation was built to change that — systematically. Founded in 2022, we combine <span className="text-foreground">education, venture building, civic technology, and policy advisory</span> into an integrated system where each programme strengthens the others.
               </p>
               <p>
-                Our approach blends education, entrepreneurship, and direct earning opportunities to build a pipeline of skilled innovators and sustainable startups. We&apos;ve trained over 4,500 participants and our community has earned $52,000+ in global hackathons.
+                We hold the only private sector seat on Sierra Leone&apos;s National Digital Development Council, chaired by the President. We&apos;re the technical implementation partner for the country&apos;s sovereign blockchain infrastructure. And we&apos;ve trained 4,500+ people, distributed $42,000+ to young freelancers, and supported 50+ startups.
               </p>
             </div>
 
@@ -69,8 +69,8 @@ export function AboutSection() {
                   <div className="text-xs font-mono text-muted-foreground uppercase tracking-wider mt-2">Learners Trained</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-light text-foreground">$52k+</div>
-                  <div className="text-xs font-mono text-muted-foreground uppercase tracking-wider mt-2">Hackathon Earnings</div>
+                  <div className="text-3xl font-light text-foreground">$42K+</div>
+                  <div className="text-xs font-mono text-muted-foreground uppercase tracking-wider mt-2">Distributed to Youth</div>
                 </div>
               </div>
             </div>

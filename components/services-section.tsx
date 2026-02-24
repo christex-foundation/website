@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { useInView } from "framer-motion"
 import { useRef, useEffect, useState } from "react"
-import { GraduationCap, Rocket, Building2, Globe, ArrowUpRight } from "lucide-react"
+import { GraduationCap, Rocket, Building2, Globe, Shield, ArrowUpRight } from "lucide-react"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false)
@@ -26,8 +26,8 @@ const services = [
     number: "01",
     title: "Digital Skills Training",
     description:
-      "Free, instructor-led programs in digital literacy, software engineering, design, AI, and blockchain. Our four-stage framework takes learners from foundations to deployment.",
-    capabilities: ["Software Engineering", "Product Design", "AI & Blockchain", "Digital Literacy"],
+      "Free, instructor-led programmes in digital literacy, software engineering, design, AI, and blockchain. Our four-stage learning framework — Foundations, Core Tech, Emerging Tech, Deploy & Earn — runs ad-hoc open sessions where learners choose what to attend.",
+    capabilities: ["Four-Stage Framework", "Product Design", "AI & Blockchain", "Digital Literacy"],
     colSpan: "lg:col-span-2",
   },
   {
@@ -35,27 +35,36 @@ const services = [
     number: "02",
     title: "Venture Studio",
     description:
-      "A hybrid studio that scouts ideas, incubates founders, and spins out investable startups. We provide capital, technical guidance, and shared infrastructure from idea to scale.",
-    capabilities: ["Build-First Model", "Founder Support", "Pre-seed Capital", "Shared Services"],
+      "No accelerator. No VC fund. No pipeline from idea to investable startup. We built one. Our hybrid venture studio scouts problems, incubates founders, and spins out companies — with $30-50K in staged capital, shared infrastructure, and hands-on co-building.",
+    capabilities: ["Build-First Model", "Staged Capital", "Shared Infrastructure", "Co-Building"],
+    colSpan: "lg:col-span-1",
+  },
+  {
+    icon: Shield,
+    number: "03",
+    title: "Sovereign Digital Infrastructure",
+    description:
+      "Technical implementation partner for Sierra Leone\u2019s sovereign blockchain infrastructure. Working with MoCTI and the SIGN Foundation on national digital identity, digital payments, and asset tokenisation. The only private sector member of the National Digital Development Council.",
+    capabilities: ["NDDC Seat", "SIGN Partnership", "Digital Identity", "Policy Advisory"],
     colSpan: "lg:col-span-1",
   },
   {
     icon: Building2,
-    number: "03",
-    title: "CivicTech & Government",
+    number: "04",
+    title: "Digital Public Goods",
     description:
-      "Digitizing public systems using AI and blockchain. From smart asset management to Digital Public Goods, we build infrastructure for transparent governance.",
-    capabilities: ["SAMS Platform", "Digital Public Goods", "IP Registry", "Policy Advisory"],
-    colSpan: "lg:col-span-1",
+      "Building open-source infrastructure for transparent governance. Our DPG Accelerator helps Sierra Leonean startups meet the 9 Digital Public Goods Standard criteria. We also build civic tech: SAMS for government asset management, and a blockchain-based IP registry.",
+    capabilities: ["DPG Accelerator", "SAMS Platform", "IP Registry", "Open Source"],
+    colSpan: "lg:col-span-2",
   },
   {
     icon: Globe,
-    number: "04",
-    title: "Innovation Hub",
+    number: "05",
+    title: "Innovation Hub & Community",
     description:
-      "Sierra Leone's award-winning tech center with co-working, classrooms, and studio space. Home to hackathons, bounty programs, and the Sinai mentorship initiative.",
-    capabilities: ["216m² Facility", "Bounty Programme", "Hackathons", "Mentorship"],
-    colSpan: "lg:col-span-2",
+      "Sierra Leone\u2019s 2025 Innovation Hub of the Year. A 216m\u00B2 facility in Freetown with co-working, classrooms, and studio space — the physical anchor for hackathons, bounty programmes, and the Sinai mentorship initiative.",
+    capabilities: ["216m\u00B2 Facility", "Hackathons", "Bounty Programme", "Mentorship"],
+    colSpan: "lg:col-span-3",
   },
 ]
 
