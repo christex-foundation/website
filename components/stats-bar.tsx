@@ -6,9 +6,9 @@ import { useRef } from "react"
 
 const stats = [
   { value: "4,500+", label: "Participants Trained" },
-  { value: "$42K+", label: "Distributed to Youth" },
-  { value: "20K+", label: "Deliveries (SendMe)" },
-  { value: "50+", label: "Startups Supported" },
+  { value: "14K", label: "Training Hours" },
+  { value: "$52K", label: "Hackathon Earnings" },
+  { value: "5K+", label: "Students Reached" },
 ]
 
 export function StatsBar() {

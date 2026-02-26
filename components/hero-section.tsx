@@ -155,8 +155,8 @@ export function HeroSection() {
               </h1>
 
               <p className="font-mono text-sm md:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Government advisor. Venture studio. Education pipeline. Building Sierra Leone&apos;s sovereign digital
-                infrastructure — from national blockchain systems to venture-backed startups.
+                Driving Sierra Leone's digital transformation through AI and blockchain education, venture building, and
+                civic technology solutions.
               </p>
 
               <div
@@ -205,8 +205,8 @@ export function HeroSection() {
                   <span>NON-PROFIT</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-muted-foreground/50">ROLE:</span>
-                  <span>NDDC ADVISOR</span>
+                  <span className="text-muted-foreground/50">FOCUS:</span>
+                  <span>AI / BLOCKCHAIN</span>
                 </div>
               </div>
             </motion.div>

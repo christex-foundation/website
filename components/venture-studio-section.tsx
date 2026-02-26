@@ -9,9 +9,7 @@ import {
   Wallet,
   Truck,
   Building2,
-  Brain,
-  Briefcase,
-  MessageCircle,
+
   Code2,
   ArrowUpRight,
   Database
@@ -22,12 +20,10 @@ import { SubmitIdeaModal } from "@/components/submit-idea-modal"
 const categories = [
   { id: "all", label: "All", icon: LayoutGrid },
   { id: "FinTech", label: "FinTech", icon: Wallet },
-  { id: "Logistics", label: "Logistics", icon: Truck },
-  { id: "Marketplace", label: "Marketplace", icon: Briefcase },
-  { id: "AI", label: "AI", icon: Brain },
-  { id: "Communications", label: "Communications", icon: MessageCircle },
   { id: "CivicTech", label: "CivicTech", icon: Building2 },
+  { id: "Logistics", label: "Logistics", icon: Truck },
   { id: "Infrastructure", label: "Infrastructure", icon: Database },
+
 ]
 
 const ventures = [
@@ -35,7 +31,7 @@ const ventures = [
     id: 1,
     name: "Mocha",
     category: "FinTech",
-    description: "Zero-fee remittances via WhatsApp, powered by blockchain. Serving Sierra Leone\u2019s $321M remittance market with instant USDC transfers.",
+    description: "Borderless, fee-free money transfers via WhatsApp for the African diaspora.",
     status: "Active",
     url: "https://www.getmocha.io/",
   },
@@ -43,50 +39,27 @@ const ventures = [
     id: 2,
     name: "SendMe",
     category: "Logistics",
-    description: "Sierra Leone\u2019s leading delivery platform. 20,000+ deliveries completed with a fleet of 15 electric bikes across Freetown.",
+    description: "Online shopping and last-mile delivery service for Sierra Leone.",
     status: "Active",
     url: "https://www.sendmesl.com/",
   },
   {
     id: 3,
-    name: "Future of Work",
-    category: "Marketplace",
-    description: "Sierra Leone\u2019s first digital employment marketplace. Piloted with UN ITC \u2014 $42,000 distributed to 450+ young freelancers across 974 tasks.",
-    status: "Building",
-    url: null,
-  },
-  {
-    id: 4,
-    name: "Geneline-X",
-    category: "AI",
-    description: "Training language models to understand Sierra Leonean languages \u2014 Krio, Temne, Mende. Speech-to-text working, text-to-speech in development.",
-    status: "Building",
-    url: null,
-  },
-  {
-    id: 5,
-    name: "BitChat",
-    category: "Communications",
-    description: "Peer-to-peer messaging that works offline. Bluetooth mesh networking with Nostr protocol for connectivity-constrained environments.",
-    status: "Building",
-    url: null,
-  },
-  {
-    id: 6,
     name: "SAMS",
     category: "CivicTech",
-    description: "Smart Asset Management System \u2014 blockchain-based tracking and management of government infrastructure and assets.",
+    description: "Smart Asset Management System using distributed ledger technology for government.",
     status: "Deployed",
     url: null,
   },
   {
-    id: 7,
+    id: 4,
     name: "DPG Pipeline",
     category: "Infrastructure",
-    description: "Accelerator helping Sierra Leonean projects meet the 9 Digital Public Goods Standard criteria and enter the global DPG Registry.",
-    status: "Active",
+    description: "Platform helping projects become certified Digital Public Goods.",
+    status: "Building",
     url: "https://launch.publicgood.dev/",
   },
+
 ]
 
 export function VentureStudioSection() {
@@ -235,7 +208,7 @@ export function VentureStudioSection() {
         {/* Bottom CTA */}
         <div className="mt-16 text-center">
           <p className="text-muted-foreground mb-6">
-            Have an idea that solves a real problem in Africa? We provide $30-50K in staged capital, shared legal/finance/tech infrastructure, workspace, mentorship, and 12 months of hands-on support.
+            Have an idea that solves a real problem in Africa? We partner with exceptional founders.
           </p>
           <SubmitIdeaModal />
         </div>
