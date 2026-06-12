@@ -348,18 +348,6 @@ export function Header({ learnResources = [] }: HeaderProps) {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <Link href="/team" legacyBehavior passHref>
-                    <NavigationMenuLink
-                      className={cn(
-                        "group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent focus:bg-transparent focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-transparent data-[state=open]:bg-transparent transition-colors",
-                        (pathname === '/team' || pathname?.startsWith('/team/')) && "text-primary font-semibold bg-primary/10 hover:bg-primary/10"
-                      )}
-                    >
-                      The Team
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
 
@@ -473,18 +461,7 @@ export function Header({ learnResources = [] }: HeaderProps) {
                 </AccordionItem>
               </Accordion>
 
-              <Link
-                href="/team"
-                className={cn(
-                  "py-2 font-mono text-xs tracking-wider uppercase text-muted-foreground hover:text-foreground border-b border-white/10",
-                  (pathname === '/team' || pathname?.startsWith('/team/')) && "text-primary font-semibold"
-                )}
-                onClick={() => setIsOpen(false)}
-              >
-                The Team
-              </Link>
-
-              <Button
+<Button
                 variant="outline"
                 size="sm"
                 className="font-mono text-xs tracking-wider uppercase rounded-none border-foreground text-foreground hover:bg-foreground hover:text-background w-fit bg-transparent mt-4"
