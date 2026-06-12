@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { CustomCursor } from "@/components/custom-cursor"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
@@ -25,10 +24,31 @@ export const metadata: Metadata = {
     "Driving Sierra Leone's digital transformation through AI and blockchain education, venture building, and civic tech solutions. 2025 Innovation Hub of the Year.",
   generator: "Next.js",
   applicationName: "Christex Foundation",
-  keywords: ["Christex Foundation", "Sierra Leone", "Blockchain", "AI", "Education", "Venture Studio", "Civic Tech", "Innovation Hub"],
+  keywords: [
+    "Christex Foundation",
+    "innovation hub",
+    "blockchain innovation hub",
+    "AI innovation hub",
+    "Sierra Leone innovation hub",
+    "West Africa innovation hub",
+    "blockchain education",
+    "AI education",
+    "digital skills training",
+    "venture studio",
+    "civic tech",
+    "Freetown",
+    "Sierra Leone",
+  ],
   authors: [{ name: "Christex Foundation" }],
   creator: "Christex Foundation",
   publisher: "Christex Foundation",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -78,7 +98,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}>
-        <CustomCursor />
         {children}
         <Toaster />
         <Analytics />

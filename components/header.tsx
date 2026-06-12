@@ -101,6 +101,7 @@ interface HeaderProps {
 export function Header({ learnResources = [] }: HeaderProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [shouldFetchLatest, setShouldFetchLatest] = useState(false)
 
   // Merge/Transform learn resources
   // If resources are passed, group them. If not, use default.
@@ -147,12 +148,35 @@ export function Header({ learnResources = [] }: HeaderProps) {
   } | null>(null);
 
   useEffect(() => {
+    if (!shouldFetchLatest) return
+
+    const cacheKey = "christex:latest-update"
+    const cacheTtlMs = 15 * 60 * 1000
+
+    try {
+      const cachedRaw = sessionStorage.getItem(cacheKey)
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw) as { ts: number; data: typeof featuredItem }
+        if (cached?.ts && Date.now() - cached.ts < cacheTtlMs && cached.data) {
+          setFeaturedItem(cached.data)
+          return
+        }
+      }
+    } catch {
+      // Ignore cache parse/storage errors and continue with network fetch.
+    }
+
     const fetchLatest = async () => {
       try {
         const res = await fetch('/api/latest-update');
         if (res.ok) {
           const data = await res.json();
           setFeaturedItem(data);
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }))
+          } catch {
+            // Ignore write failures (private mode/storage restrictions).
+          }
         }
       } catch (e) {
         console.error("Failed to fetch latest update for menu", e);
@@ -160,7 +184,7 @@ export function Header({ learnResources = [] }: HeaderProps) {
     };
 
     fetchLatest();
-  }, []);
+  }, [shouldFetchLatest]);
 
   // Default fallback
   const effectiveFeaturedItem = featuredItem || {
@@ -205,6 +229,9 @@ export function Header({ learnResources = [] }: HeaderProps) {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
+                    onPointerEnter={() => setShouldFetchLatest(true)}
+                    onFocus={() => setShouldFetchLatest(true)}
+                    onClick={() => setShouldFetchLatest(true)}
                     className={cn(
                       "bg-transparent text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent data-[active]:bg-transparent",
                       isCommunityActive && "text-primary font-semibold bg-primary/10 hover:bg-primary/10"
@@ -374,7 +401,14 @@ export function Header({ learnResources = [] }: HeaderProps) {
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden text-foreground" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
+          <button
+            className="md:hidden text-foreground"
+            onClick={() => {
+              setShouldFetchLatest(true)
+              setIsOpen(!isOpen)
+            }}
+            aria-label="Toggle menu"
+          >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>

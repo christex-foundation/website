@@ -1,10 +1,32 @@
 "use client"
 
 import { useRef, useState, useEffect, useCallback } from "react"
+import type { CSSProperties, ComponentType } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
-import { LLMAnimation } from "./llm-animation"
-import ColorBends from "./ColorBends"
+import dynamic from "next/dynamic"
+
+type ColorBendsProps = {
+  className?: string
+  style?: CSSProperties
+  rotation?: number
+  speed?: number
+  colors?: string[]
+  transparent?: boolean
+  autoRotate?: number
+  scale?: number
+  frequency?: number
+  warpStrength?: number
+  mouseInfluence?: number
+  parallax?: number
+  noise?: number
+}
+
+const LLMAnimation = dynamic(() => import("./llm-animation").then(mod => mod.LLMAnimation), { ssr: false })
+const ColorBends = dynamic<ColorBendsProps>(
+  () => import("./ColorBends") as Promise<{ default: ComponentType<ColorBendsProps> }>,
+  { ssr: false }
+)
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false)
@@ -24,9 +46,23 @@ function useIsMobile() {
 export function HeroSection() {
   const isMobile = useIsMobile()
   const [isIdle, setIsIdle] = useState(false)
+  const [isColorBendsReady, setIsColorBendsReady] = useState(false)
   const [isHoveringButtons, setIsHoveringButtons] = useState(false)
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const colorBendsTimerRef = useRef<NodeJS.Timeout | null>(null)
   const heroRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    colorBendsTimerRef.current = setTimeout(() => {
+      setIsColorBendsReady(true)
+    }, 3000)
+
+    return () => {
+      if (colorBendsTimerRef.current) {
+        clearTimeout(colorBendsTimerRef.current)
+      }
+    }
+  }, [])
 
   const resetIdleTimer = useCallback(() => {
     if (isMobile) return
@@ -74,9 +110,9 @@ export function HeroSection() {
 
   return (
     <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* ColorBends background - shows by default */}
+      {/* ColorBends background - shows by default on desktop */}
       <AnimatePresence>
-        {!isIdle && (
+        {isColorBendsReady && !isIdle && !isMobile && (
           <motion.div
             className="absolute inset-0 z-0"
             initial={{ opacity: 1 }}
@@ -103,9 +139,9 @@ export function HeroSection() {
         )}
       </AnimatePresence>
 
-      {/* LLM Animation - shows when idle */}
+      {/* LLM Animation - shows when idle on desktop, or always on mobile */}
       <AnimatePresence>
-        {isIdle && (
+        {(isIdle || isMobile) && (
           <motion.div
             className="absolute inset-0 z-0"
             initial={{ opacity: 0 }}
@@ -156,7 +192,7 @@ export function HeroSection() {
               </h1>
 
               <p className="font-mono text-sm md:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Driving Sierra Leone's digital transformation through AI and blockchain education, venture building, and
+                Driving Sierra Leone&apos;s digital transformation through AI and blockchain education, venture building, and
                 civic technology solutions.
               </p>
 
