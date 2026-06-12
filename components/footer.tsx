@@ -51,7 +51,7 @@ export function Footer() {
             </p>
             <p className="font-mono text-xs text-muted-foreground mb-6">Freetown, Sierra Leone</p>
             <div className="font-mono text-xs text-muted-foreground">
-              © 2025 Christex Foundation. All rights reserved.
+              © {new Date().getFullYear()} Christex Foundation. All rights reserved.
             </div>
           </div>
 
