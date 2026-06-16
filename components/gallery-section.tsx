@@ -6,11 +6,50 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 const hardcodedImages = [
+    "/images/gallery/twitter-image-1.webp",
+    "/images/gallery/pxl20240302183612696portrait.webp",
+    "/images/gallery/dpg1.webp",
+    "/images/gallery/img0461-enhanced-nr.webp",
+    "/images/gallery/sldtp-bootcamp-day-2-26.webp",
+    "/images/gallery/pxl20240302192341069portrait.webp",
+    "/images/gallery/img1369.webp",
+    "/images/gallery/twitter-image-2.webp",
+    "/images/gallery/pxl20240302183708468portrait.webp",
+    "/images/gallery/dpg2.webp",
+    "/images/gallery/img0471-enhanced-nr.webp",
+    "/images/gallery/superteamworld-tour-2-18.webp",
+    "/images/gallery/pxl20240302183725584portrait.webp",
+    "/images/gallery/img6112.webp",
     "/images/gallery/IMG_2206.webp",
+    "/images/gallery/twitter-image-3.webp",
+    "/images/gallery/pxl20240302183727775portrait.webp",
+    "/images/gallery/dpg3.webp",
+    "/images/gallery/img0476-enhanced-nr.webp",
+    "/images/gallery/sldtp-bootcamp-day-2-50.webp",
+    "/images/gallery/pxl20240302192411909portrait.webp",
+    "/images/gallery/img8274.webp",
     "/images/gallery/IMG_2207.webp",
+    "/images/gallery/pxl20240302193615507portrait.webp",
+    "/images/gallery/file138.webp",
+    "/images/gallery/img0489-enhanced-nr.webp",
+    "/images/gallery/superteamworld-tour-2-21.webp",
+    "/images/gallery/pxl20240302192422987.webp",
+    "/images/gallery/img8285.webp",
     "/images/gallery/IMG_2212.webp",
+    "/images/gallery/pxl20240302201925705portrait.webp",
+    "/images/gallery/img1626.webp",
+    "/images/gallery/sldtp-bootcamp-20.webp",
+    "/images/gallery/pxl20240302192424975.webp",
+    "/images/gallery/img9237.webp",
     "/images/gallery/IMG_2228.webp",
+    "/images/gallery/pxl20240302202037881portrait.webp",
+    "/images/gallery/img9810.webp",
+    "/images/gallery/pxl20240302192458347mp.webp",
+    "/images/gallery/img9955.webp",
     "/images/gallery/IMG_4484.webp",
+    "/images/gallery/pxl20240302171935382.webp",
+    "/images/gallery/img9957.webp",
+    "/images/gallery/pxl20240302193810914.webp",
 ]
 
 function MarqueeRow({
@@ -39,7 +78,7 @@ function MarqueeRow({
                 {[...images, ...images, ...images, ...images].map((src, i) => (
                     <div
                         key={i}
-                        className="relative rounded-xl overflow-hidden shrink-0 aspect-[4/3] h-[200px] md:h-[280px] even:aspect-[3/4] group/item bg-muted"
+                        className="relative rounded-xl overflow-hidden shrink-0 aspect-[4/3] h-[200px] md:h-[280px] group/item bg-muted"
                     >
                         <Image
                             src={src}
