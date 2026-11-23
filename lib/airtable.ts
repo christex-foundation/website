@@ -6,6 +6,7 @@ const apiKey = process.env.AIRTABLE_API_KEY;
 const eventsTableId = process.env.AIRTABLE_EVENTS_TABLE_ID;
 const blogTableId = process.env.AIRTABLE_BLOG_TABLE_ID;
 const galleryTableId = process.env.AIRTABLE_GALLERY_TABLE_ID;
+const ideasTableId = process.env.AIRTABLE_IDEAS_TABLE_ID;
 
 // Fail gracefully if keys are not present (during build or dev without keys)
 const base = (baseId && apiKey)
@@ -213,6 +214,15 @@ export const getGalleryImages = unstable_cache(
     { tags: ['gallery'], revalidate: 3600 }
 );
 
+function isPublishedBlogRecord(record: { get: (field: string) => unknown }): boolean {
+    const rawStatus = record.get('Status');
+    if (typeof rawStatus !== 'string' || !rawStatus.trim()) {
+        // Backward-compatible: if no Status column exists or it's blank, treat as published.
+        return true;
+    }
+    return rawStatus.trim().toLowerCase() === 'published';
+}
+
 export const getBlogPosts = unstable_cache(
     async (): Promise<BlogPost[]> => {
         if (!base || !blogTableId) {
@@ -225,7 +235,9 @@ export const getBlogPosts = unstable_cache(
                 sort: [{ field: 'Date', direction: 'desc' }],
             }).all();
 
-            return records.map(record => mapRecordToBlogPost(record));
+            return records
+                .filter(record => isPublishedBlogRecord(record))
+                .map(record => mapRecordToBlogPost(record));
         } catch (error) {
             console.error("Error fetching news from Airtable:", error);
             return MOCK_NEWS;
@@ -243,13 +255,14 @@ export const getBlogPostBySlug = unstable_cache(
 
         try {
             const decodedSlug = decodeURIComponent(slug);
+            const escapedSlug = decodedSlug.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
             const records = await base(blogTableId).select({
-                filterByFormula: `{Slug} = '${decodedSlug}'`,
+                filterByFormula: `{Slug} = '${escapedSlug}'`,
                 maxRecords: 1
             }).firstPage();
 
-            if (records.length === 0) {
+            if (records.length === 0 || !isPublishedBlogRecord(records[0])) {
                 return null;
             }
 
@@ -372,8 +385,7 @@ export async function submitIdea(data: {
     }
 
     try {
-        // Use table name 'Ideas' directly or an env var if preferred
-        const tableId = 'tbltYJmENoTTmbRyx';
+        const tableId = ideasTableId || 'Ideas';
 
         await base(tableId).create([
             {
