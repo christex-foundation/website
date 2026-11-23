@@ -28,7 +28,7 @@ export default async function BlogPage() {
             <Header />
 
             {/* Featured Section */}
-            {featuredPost && (
+            {featuredPost ? (
                 <section className="pt-32 pb-16 px-6 lg:px-12 border-b border-border relative">
                     {/* Background Decor - Subtle orange glow */}
                     <div className="absolute top-24 -right-24 w-96 h-96 bg-orange-500/10 blur-[100px] rounded-full pointer-events-none mix-blend-screen" />
@@ -87,6 +87,15 @@ export default async function BlogPage() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
+            ) : (
+                <section className="pt-32 pb-24 px-6 lg:px-12">
+                    <div className="max-w-7xl mx-auto">
+                        <h1 className="text-5xl md:text-7xl font-bold mb-6">News & Insights</h1>
+                        <p className="text-lg text-muted-foreground max-w-xl">
+                            No published articles yet. Check back soon for the latest updates and stories from the Christex Foundation team.
+                        </p>
                     </div>
                 </section>
             )}

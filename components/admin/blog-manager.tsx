@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { SharePostButton, buildPostUrl } from "@/components/share-post-button"
 import {
   type PreparedImage,
   prepareImageForUpload,
@@ -302,11 +303,20 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
 
       await onRefresh()
       setForm(recordToForm(savedRecord))
-      toast.success(
-        targetStatus === "Published"
-          ? "Article published! It is now live on the website."
-          : "Draft saved safely (hidden from the live site)."
-      )
+      if (targetStatus === "Published") {
+        const shareSlug = savedRecord.slug || savedRecord.id
+        toast.success("Article published! It is now live on the website.", {
+          action: {
+            label: "Copy link",
+            onClick: () => {
+              navigator.clipboard?.writeText(buildPostUrl(shareSlug))
+              toast.success("Article link copied!")
+            },
+          },
+        })
+      } else {
+        toast.success("Draft saved safely (hidden from the live site).")
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save article.")
     } finally {
@@ -414,12 +424,22 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
 
           <div className="flex items-center gap-2">
             {form.id && form.status === "Published" && form.slug && (
-              <Button asChild variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
-                <a href={`/blog/${form.slug}`} target="_blank" rel="noreferrer">
-                  View Live
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </Button>
+              <>
+                <SharePostButton
+                  title={form.title}
+                  slug={form.slug}
+                  excerpt={form.excerpt}
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 text-xs text-muted-foreground"
+                />
+                <Button asChild variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
+                  <a href={`/blog/${encodeURIComponent(form.slug)}`} target="_blank" rel="noreferrer">
+                    View Live
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </Button>
+              </>
             )}
             <Button
               variant="outline"
@@ -1155,17 +1175,26 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
                     Edit
                   </Button>
                   {!isDraft && (
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0"
-                      title="Open live post"
-                    >
-                      <a href={`/blog/${post.slug || post.id}`} target="_blank" rel="noreferrer">
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </Button>
+                    <>
+                      <SharePostButton
+                        title={post.title}
+                        slug={post.slug || post.id}
+                        excerpt={post.excerpt}
+                        size="icon"
+                        variant="ghost"
+                      />
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        title="Open live post"
+                      >
+                        <a href={`/blog/${encodeURIComponent(post.slug || post.id)}`} target="_blank" rel="noreferrer">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </Button>
+                    </>
                   )}
                   <Button
                     size="sm"

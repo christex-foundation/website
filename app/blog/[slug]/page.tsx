@@ -1,6 +1,6 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { getBlogPostBySlug, getBlogPosts, BlogPost } from "@/lib/airtable"
+import { getBlogPostBySlug, getBlogPosts, getPostComments, BlogPost } from "@/lib/airtable"
 import { notFound } from "next/navigation"
 import { User, Calendar, Clock, ArrowLeft, ChevronRight, ChevronLeft } from "lucide-react"
 import Link from "next/link"
@@ -8,11 +8,20 @@ import Image from "next/image"
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Button } from "@/components/ui/button"
+import { SharePostButton } from "@/components/share-post-button"
+import { BlogComments, BlogLikeButton } from "@/components/blog-engagement"
 import type { Metadata } from "next"
+
+const SITE_URL = "https://christex.foundation"
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params
-    const post = await getBlogPostBySlug(slug)
+    const decodedSlug = decodeURIComponent(slug)
+    let post = await getBlogPostBySlug(decodedSlug)
+    if (!post) {
+        const allPosts = await getBlogPosts()
+        post = allPosts.find(p => p.slug === slug || p.slug === decodedSlug) || null
+    }
 
     if (!post) {
         return {
@@ -20,32 +29,57 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         }
     }
 
+    const postUrl = `${SITE_URL}/blog/${encodeURIComponent(post.slug)}`
+    const ogImageUrl = `${SITE_URL}/api/blog/og-image?slug=${encodeURIComponent(post.slug)}`
+    const description =
+        post.excerpt ||
+        "Read the latest story and insights from the Christex Foundation."
+
     return {
         title: post.title,
-        description: post.excerpt,
+        description,
+        alternates: {
+            canonical: postUrl,
+        },
         openGraph: {
             title: post.title,
-            description: post.excerpt,
-            images: post.imageUrl ? [{ url: post.imageUrl }] : [],
+            description,
+            url: postUrl,
+            siteName: 'Christex Foundation',
+            locale: 'en_US',
             type: 'article',
             publishedTime: post.date,
-            authors: post.author ? [post.author] : [],
+            authors: post.author ? [post.author] : ['Christex Foundation'],
+            section: post.category || undefined,
+            images: [
+                {
+                    url: ogImageUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: post.title,
+                },
+            ],
         },
         twitter: {
             card: 'summary_large_image',
             title: post.title,
-            description: post.excerpt,
-            images: post.imageUrl ? [post.imageUrl] : [],
+            description,
+            site: '@ChristexFndn',
+            creator: '@ChristexFndn',
+            images: [ogImageUrl],
         },
     }
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
+    const decodedSlug = decodeURIComponent(slug)
 
     // Fetch all posts to determine next/prev
     const allPosts = await getBlogPosts();
-    const currentIndex = allPosts.findIndex(p => p.slug === slug);
+    const currentIndex = allPosts.findIndex(
+        p => p.slug === slug || p.slug === decodedSlug
+    );
 
     // If not found in the list (rare race condition if list is cached but slug fetch works), try fetching single
     // But usually currentIndex === -1 is enough to 404
@@ -53,6 +87,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         notFound()
     }
     const post = allPosts[currentIndex];
+    const initialComments = await getPostComments(post.slug);
 
     // Determine Next/Prev
     // "Previous" (older) is index + 1
@@ -108,15 +143,28 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
                         <h1 className="text-4xl md:text-5xl font-bold mb-8 leading-tight">{post.title}</h1>
 
-                        <div className="flex items-center gap-4 pb-8 border-b border-border">
-                            {post.author && (
-                                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                                    <User className="w-6 h-6 text-muted-foreground" />
+                        <div className="flex items-center justify-between gap-4 pb-8 border-b border-border">
+                            <div className="flex items-center gap-4">
+                                {post.author && (
+                                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                        <User className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                )}
+                                <div>
+                                    {post.author && <div className="font-bold">{post.author}</div>}
+                                    {post.author && <div className="text-sm text-muted-foreground">Author</div>}
                                 </div>
-                            )}
-                            <div>
-                                {post.author && <div className="font-bold">{post.author}</div>}
-                                {post.author && <div className="text-sm text-muted-foreground">Author</div>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <BlogLikeButton
+                                    slug={post.slug}
+                                    initialLikes={post.likes}
+                                />
+                                <SharePostButton
+                                    title={post.title}
+                                    slug={post.slug}
+                                    excerpt={post.excerpt}
+                                />
                             </div>
                         </div>
                     </header>
@@ -194,6 +242,31 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                             {processedContent}
                         </ReactMarkdown>
                     </div>
+
+                    {/* Engagement Footer Bar (Like + Share) */}
+                    <div className="mt-14 pt-8 border-t border-border flex flex-wrap items-center justify-between gap-4">
+                        <p className="text-sm text-muted-foreground font-mono">
+                            Enjoyed this article? Like or share it with your network.
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <BlogLikeButton
+                                slug={post.slug}
+                                initialLikes={post.likes}
+                            />
+                            <SharePostButton
+                                title={post.title}
+                                slug={post.slug}
+                                excerpt={post.excerpt}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Comments Section */}
+                    <BlogComments
+                        slug={post.slug}
+                        postTitle={post.title}
+                        initialComments={initialComments}
+                    />
 
                 </div>
             </article>

@@ -13,11 +13,13 @@ import {
   Loader2,
   Lock,
   LogOut,
+  MessageSquare,
   RefreshCw,
   ExternalLink,
 } from "lucide-react"
 import type {
   AdminBlogRecord,
+  AdminCommentRecord,
   AdminEventRecord,
   AdminIdeaRecord,
   AdminLearnRecord,
@@ -29,6 +31,7 @@ import { BlogManager } from "./blog-manager"
 import { EventsManager } from "./events-manager"
 import { LearnManager } from "./learn-manager"
 import { IdeasManager } from "./ideas-manager"
+import { CommentsManager } from "./comments-manager"
 
 interface AdminShellProps {
   initialAuthenticated: boolean
@@ -49,6 +52,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
   const [events, setEvents] = useState<AdminEventRecord[]>([])
   const [learn, setLearn] = useState<AdminLearnRecord[]>([])
   const [ideas, setIdeas] = useState<AdminIdeaRecord[]>([])
+  const [comments, setComments] = useState<AdminCommentRecord[]>([])
 
   const fetchSection = useCallback(async (section: AdminSection) => {
     const res = await fetch(`/api/admin/${section}`, { cache: "no-store" })
@@ -64,17 +68,25 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
     if (section === "events") setEvents(data.records || [])
     if (section === "learn") setLearn(data.records || [])
     if (section === "ideas") setIdeas(data.records || [])
+    if (section === "comments") setComments(data.records || [])
   }, [])
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (syncCache = false) => {
     setLoading(true)
     try {
+      if (syncCache) {
+        await fetch("/api/admin/revalidate", { method: "POST" })
+      }
       await Promise.all([
         fetchSection("blog"),
         fetchSection("events"),
         fetchSection("learn"),
         fetchSection("ideas"),
+        fetchSection("comments"),
       ])
+      if (syncCache) {
+        toast.success("Synced latest Airtable data to the website.")
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load Airtable data.")
     } finally {
@@ -85,7 +97,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
   useEffect(() => {
     if (!authenticated) return
     let cancelled = false
-    const sections: AdminSection[] = ["blog", "events", "learn", "ideas"]
+    const sections: AdminSection[] = ["blog", "events", "learn", "ideas", "comments"]
 
     async function loadInitial() {
       try {
@@ -108,6 +120,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
           if (r.section === "events") setEvents(r.records)
           if (r.section === "learn") setLearn(r.records)
           if (r.section === "ideas") setIdeas(r.records)
+          if (r.section === "comments") setComments(r.records)
         }
       } catch (err) {
         if (!cancelled) {
@@ -222,6 +235,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
 
   const tabs: Array<{ id: AdminSection; label: string; count: number; icon: React.ReactNode }> = [
     { id: "blog", label: "Blog", count: posts.length, icon: <FileText className="w-4 h-4" /> },
+    { id: "comments", label: "Comments", count: comments.length, icon: <MessageSquare className="w-4 h-4" /> },
     { id: "events", label: "Events", count: events.length, icon: <Calendar className="w-4 h-4" /> },
     { id: "learn", label: "Learn", count: learn.length, icon: <BookOpen className="w-4 h-4" /> },
     {
@@ -250,13 +264,13 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
             <Button
               size="sm"
               variant="ghost"
-              onClick={fetchAll}
+              onClick={() => fetchAll(true)}
               disabled={loading}
               className="h-8 gap-1.5 text-xs text-muted-foreground"
-              title="Refresh from Airtable"
+              title="Refresh from Airtable and sync website cache"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">Refresh</span>
+              <span className="hidden sm:inline">Sync Site</span>
             </Button>
             <Button asChild size="sm" variant="ghost" className="h-8 gap-1.5 text-xs text-muted-foreground">
               <Link href="/" target="_blank">
@@ -315,6 +329,13 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
             posts={posts}
             loading={loading}
             onRefresh={() => fetchSection("blog")}
+          />
+        )}
+        {activeTab === "comments" && (
+          <CommentsManager
+            comments={comments}
+            loading={loading}
+            onRefresh={() => fetchSection("comments")}
           />
         )}
         {activeTab === "events" && (

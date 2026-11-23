@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getBlogPosts, getEvents } from '@/lib/airtable';
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 export async function GET() {
     try {

@@ -1,7 +1,7 @@
 import Airtable from "airtable"
 import { revalidatePath, revalidateTag } from "next/cache"
 
-export type AdminSection = "blog" | "events" | "learn" | "ideas"
+export type AdminSection = "blog" | "events" | "learn" | "ideas" | "comments"
 
 export interface AdminAttachment {
   id: string
@@ -60,6 +60,16 @@ export interface AdminIdeaRecord {
   createdTime?: string
 }
 
+export interface AdminCommentRecord {
+  id: string
+  author: string
+  body: string
+  postSlug: string
+  postTitle: string
+  status: string
+  createdTime?: string
+}
+
 function getAirtableConfig() {
   const apiKey = process.env.AIRTABLE_API_KEY
   const baseId = process.env.AIRTABLE_BASE_ID
@@ -82,6 +92,8 @@ function getTableId(section: AdminSection): string {
       return process.env.AIRTABLE_LEARN_TABLE_ID
     case "ideas":
       return process.env.AIRTABLE_IDEAS_TABLE_ID || "Ideas"
+    case "comments":
+      return process.env.AIRTABLE_COMMENTS_TABLE_ID || "Comments"
   }
 }
 
@@ -159,6 +171,16 @@ function mapRecord(section: AdminSection, record: { id: string; _rawJson?: { cre
         status: String(record.get("Status") || "New"),
         createdTime: record._rawJson?.createdTime,
       } satisfies AdminIdeaRecord
+    case "comments":
+      return {
+        id: record.id,
+        author: String(record.get("Author") || "Anonymous"),
+        body: String(record.get("Body") || ""),
+        postSlug: String(record.get("PostSlug") || ""),
+        postTitle: String(record.get("PostTitle") || ""),
+        status: String(record.get("Status") || "Approved"),
+        createdTime: record._rawJson?.createdTime,
+      } satisfies AdminCommentRecord
   }
 }
 
@@ -175,6 +197,8 @@ export function revalidateSection(section: AdminSection) {
   } else if (section === "learn") {
     revalidateTag("learn", { expire: 0 })
     revalidatePath("/")
+  } else if (section === "comments") {
+    revalidatePath("/blog/[slug]", "page")
   }
 }
 
@@ -189,11 +213,22 @@ export async function listAdminRecords(section: AdminSection) {
     selectOptions.sort = [{ field: "Title", direction: "asc" }]
   }
 
-  const records = await base(tableId).select(selectOptions).all()
+  let records
+  try {
+    records = await base(tableId).select(selectOptions).all()
+  } catch (error) {
+    // Gracefully return empty list if optional Comments table hasn't been created yet
+    if (section === "comments") {
+      console.warn("Comments table not available yet in Airtable:", error)
+      return []
+    }
+    throw error
+  }
+
   const mapped = records.map((r) => mapRecord(section, r as unknown as Parameters<typeof mapRecord>[1]))
 
-  if (section === "ideas") {
-    return (mapped as AdminIdeaRecord[]).sort((a, b) =>
+  if (section === "ideas" || section === "comments") {
+    return (mapped as Array<{ createdTime?: string }>).sort((a, b) =>
       (b.createdTime || "").localeCompare(a.createdTime || "")
     )
   }
@@ -279,6 +314,12 @@ function buildAirtableFields(
     setString("Resources", "resources")
     setString("Category", "category")
     setString("Status", "status")
+  } else if (section === "comments") {
+    setString("Author", "author")
+    setString("Body", "body")
+    setString("PostSlug", "postSlug")
+    setString("PostTitle", "postTitle")
+    setString("Status", "status")
   }
 
   return fields
@@ -316,6 +357,7 @@ const ALLOWED_ATTACHMENT_FIELDS: Record<AdminSection, string[]> = {
   events: ["Image"],
   learn: ["Thumbnail"],
   ideas: [],
+  comments: [],
 }
 
 export async function uploadAdminAttachment(params: {

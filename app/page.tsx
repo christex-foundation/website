@@ -11,7 +11,7 @@ import type { Metadata } from "next"
 import { getLearnResources } from "@/lib/airtable"
 
 // Revalidate page every hour to pick up new Airtable changes
-export const revalidate = 3600
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: "Christex Foundation | Educate. Empower. Earn.",

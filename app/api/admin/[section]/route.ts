@@ -6,7 +6,7 @@ import {
   listAdminRecords,
 } from "@/lib/airtable-admin"
 
-const VALID_SECTIONS: AdminSection[] = ["blog", "events", "learn", "ideas"]
+const VALID_SECTIONS: AdminSection[] = ["blog", "events", "learn", "ideas", "comments"]
 
 function parseSection(raw: string): AdminSection | null {
   return VALID_SECTIONS.includes(raw as AdminSection) ? (raw as AdminSection) : null

@@ -7,6 +7,7 @@ const eventsTableId = process.env.AIRTABLE_EVENTS_TABLE_ID;
 const blogTableId = process.env.AIRTABLE_BLOG_TABLE_ID;
 const galleryTableId = process.env.AIRTABLE_GALLERY_TABLE_ID;
 const ideasTableId = process.env.AIRTABLE_IDEAS_TABLE_ID;
+const commentsTableId = process.env.AIRTABLE_COMMENTS_TABLE_ID;
 
 // Fail gracefully if keys are not present (during build or dev without keys)
 const base = (baseId && apiKey)
@@ -37,6 +38,16 @@ export interface BlogPost {
     contentImages?: string[]; // Array of additional image URLs
     slug: string; // For SEO-friendly URLs
     readTime?: string;
+    likes: number;
+}
+
+export interface BlogComment {
+    id: string;
+    author: string;
+    body: string;
+    postSlug: string;
+    postTitle?: string;
+    createdAt: string;
 }
 
 export interface LearnResource {
@@ -106,6 +117,7 @@ By leveraging blockchain technology, we can create self-sovereign identities tha
 We heavily invested in pilot programs...
         `,
         readTime: "5 min read",
+        likes: 0,
         contentImages: [
             "https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?auto=format&fit=crop&q=80&w=1000",
             "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1000"
@@ -120,46 +132,53 @@ We heavily invested in pilot programs...
         category: "AI & Society",
         slug: "building-resilient-communities-ai",
         content: "Full content would go here...",
-        readTime: "8 min read"
+        readTime: "8 min read",
+        likes: 0
     }
 ];
 
 const MOCK_LEARN_RESOURCES: LearnResource[] = [];
 
-// Cached Data Fetching Functions using unstable_cache
+// Cached Data Fetching Functions using unstable_cache (bypassed in local dev so Airtable edits appear immediately)
 import { unstable_cache } from 'next/cache';
 
-export const getEvents = unstable_cache(
-    async (): Promise<Event[]> => {
-        if (!base || !eventsTableId) {
-            console.warn("Airtable credentials or table ID missing, using mock data for Events.");
-            return MOCK_EVENTS;
-        }
+async function fetchEventsRaw(): Promise<Event[]> {
+    if (!base || !eventsTableId) {
+        console.warn("Airtable credentials or table ID missing, using mock data for Events.");
+        return MOCK_EVENTS;
+    }
 
-        try {
-            const records = await base(eventsTableId).select({
-                sort: [{ field: 'Date', direction: 'asc' }],
-                filterByFormula: "IS_AFTER({Date}, TODAY())" // Only future events
-            }).all();
+    try {
+        const records = await base(eventsTableId).select({
+            sort: [{ field: 'Date', direction: 'asc' }],
+            filterByFormula: "IS_AFTER({Date}, TODAY())" // Only future events
+        }).all();
 
-            return records.map(record => ({
-                id: record.id,
-                title: record.get('Title') as string,
-                date: record.get('Date') as string,
-                location: record.get('Location') as string,
-                description: record.get('Description') as string,
-                category: record.get('Category') as string,
-                imageUrl: (record.get('Image') as any)?.[0]?.url,
-                registrationLink: record.get('RegistrationLink') as string,
-            }));
-        } catch (error) {
-            console.error("Error fetching events from Airtable:", error);
-            return MOCK_EVENTS;
-        }
-    },
+        return records.map(record => ({
+            id: record.id,
+            title: record.get('Title') as string,
+            date: record.get('Date') as string,
+            location: record.get('Location') as string,
+            description: record.get('Description') as string,
+            category: record.get('Category') as string,
+            imageUrl: (record.get('Image') as any)?.[0]?.url,
+            registrationLink: record.get('RegistrationLink') as string,
+        }));
+    } catch (error) {
+        console.error("Error fetching events from Airtable:", error);
+        return MOCK_EVENTS;
+    }
+}
+
+const getEventsCached = unstable_cache(
+    fetchEventsRaw,
     ['events-list'],
-    { tags: ['events'], revalidate: 3600 }
+    { tags: ['events'], revalidate: 60 }
 );
+
+export async function getEvents(): Promise<Event[]> {
+    return process.env.NODE_ENV === 'development' ? fetchEventsRaw() : getEventsCached();
+}
 
 export const getGalleryImages = unstable_cache(
     async (): Promise<string[]> => {
@@ -211,7 +230,7 @@ export const getGalleryImages = unstable_cache(
         }
     },
     ['gallery-images'],
-    { tags: ['gallery'], revalidate: 3600 }
+    { tags: ['gallery'], revalidate: 60 }
 );
 
 function isPublishedBlogRecord(record: { get: (field: string) => unknown }): boolean {
@@ -223,89 +242,111 @@ function isPublishedBlogRecord(record: { get: (field: string) => unknown }): boo
     return rawStatus.trim().toLowerCase() === 'published';
 }
 
-export const getBlogPosts = unstable_cache(
-    async (): Promise<BlogPost[]> => {
-        if (!base || !blogTableId) {
-            console.warn("Airtable credentials or table ID missing (base is null), using mock data for Blog.");
-            return MOCK_NEWS;
-        }
+async function fetchBlogPostsRaw(): Promise<BlogPost[]> {
+    if (!base || !blogTableId) {
+        console.warn("Airtable credentials or table ID missing (base is null), using mock data for Blog.");
+        return MOCK_NEWS;
+    }
 
-        try {
-            const records = await base(blogTableId).select({
-                sort: [{ field: 'Date', direction: 'desc' }],
-            }).all();
+    try {
+        const records = await base(blogTableId).select({
+            sort: [{ field: 'Date', direction: 'desc' }],
+        }).all();
 
-            return records
-                .filter(record => isPublishedBlogRecord(record))
-                .map(record => mapRecordToBlogPost(record));
-        } catch (error) {
-            console.error("Error fetching news from Airtable:", error);
-            return MOCK_NEWS;
-        }
-    },
+        return records
+            .filter(record => isPublishedBlogRecord(record))
+            .map(record => mapRecordToBlogPost(record));
+    } catch (error) {
+        console.error("Error fetching news from Airtable:", error);
+        return MOCK_NEWS;
+    }
+}
+
+const getBlogPostsCached = unstable_cache(
+    fetchBlogPostsRaw,
     ['blog-posts'],
-    { tags: ['blog'], revalidate: 3600 }
+    { tags: ['blog'], revalidate: 60 }
 );
 
-export const getBlogPostBySlug = unstable_cache(
-    async (slug: string): Promise<BlogPost | null> => {
-        if (!base || !blogTableId) {
-            return MOCK_NEWS.find(p => p.slug === slug) || null;
-        }
+export async function getBlogPosts(): Promise<BlogPost[]> {
+    return process.env.NODE_ENV === 'development' ? fetchBlogPostsRaw() : getBlogPostsCached();
+}
 
-        try {
-            const decodedSlug = decodeURIComponent(slug);
-            const escapedSlug = decodedSlug.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+async function fetchBlogPostBySlugRaw(slug: string): Promise<BlogPost | null> {
+    if (!base || !blogTableId) {
+        return MOCK_NEWS.find(p => p.slug === slug) || null;
+    }
 
-            const records = await base(blogTableId).select({
-                filterByFormula: `{Slug} = '${escapedSlug}'`,
-                maxRecords: 1
-            }).firstPage();
+    try {
+        const decodedSlug = decodeURIComponent(slug);
+        const escapedSlug = decodedSlug.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-            if (records.length === 0 || !isPublishedBlogRecord(records[0])) {
-                return null;
-            }
+        const records = await base(blogTableId).select({
+            filterByFormula: `{Slug} = '${escapedSlug}'`,
+            maxRecords: 1
+        }).firstPage();
 
-            return mapRecordToBlogPost(records[0]);
-        } catch (error) {
-            console.error("Error fetching single post from Airtable:", error);
+        if (records.length === 0 || !isPublishedBlogRecord(records[0])) {
             return null;
         }
-    },
+
+        return mapRecordToBlogPost(records[0]);
+    } catch (error) {
+        console.error("Error fetching single post from Airtable:", error);
+        return null;
+    }
+}
+
+const getBlogPostBySlugCached = unstable_cache(
+    fetchBlogPostBySlugRaw,
     ['blog-post-by-slug'],
-    { tags: ['blog'], revalidate: 3600 }
+    { tags: ['blog'], revalidate: 60 }
 );
 
-export const getLearnResources = unstable_cache(
-    async (): Promise<LearnResource[]> => {
-        const learnTableId = process.env.AIRTABLE_LEARN_TABLE_ID;
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+    return process.env.NODE_ENV === 'development'
+        ? fetchBlogPostBySlugRaw(slug)
+        : getBlogPostBySlugCached(slug);
+}
 
-        if (!base || !learnTableId) {
-            return MOCK_LEARN_RESOURCES;
-        }
+async function fetchLearnResourcesRaw(): Promise<LearnResource[]> {
+    const learnTableId = process.env.AIRTABLE_LEARN_TABLE_ID;
 
-        try {
-            const records = await base(learnTableId).select({
-                sort: [{ field: 'Title', direction: 'asc' }]
-            }).all();
+    if (!base || !learnTableId) {
+        return MOCK_LEARN_RESOURCES;
+    }
 
-            return records.map(record => ({
-                id: record.id,
-                title: record.get('Title') as string,
-                url: record.get('URL') as string,
-                category: record.get('Category') as string,
-                featured: record.get('Featured') as boolean,
-                thumbnail: (record.get('Thumbnail') as any)?.[0]?.url || (record.get('ThumbnailURL') as string),
-                description: record.get('Description') as string,
-            }));
-        } catch (error) {
-            console.error("Error fetching learn resources from Airtable:", error);
-            return MOCK_LEARN_RESOURCES;
-        }
-    },
+    try {
+        const records = await base(learnTableId).select({
+            sort: [{ field: 'Title', direction: 'asc' }]
+        }).all();
+
+        return records.map(record => ({
+            id: record.id,
+            title: record.get('Title') as string,
+            url: record.get('URL') as string,
+            category: record.get('Category') as string,
+            featured: record.get('Featured') as boolean,
+            thumbnail: (record.get('Thumbnail') as any)?.[0]?.url || (record.get('ThumbnailURL') as string),
+            description: record.get('Description') as string,
+        }));
+    } catch (error) {
+        console.error("Error fetching learn resources from Airtable:", error);
+        return MOCK_LEARN_RESOURCES;
+    }
+}
+
+const getLearnResourcesCached = unstable_cache(
+    fetchLearnResourcesRaw,
     ['learn-resources'],
-    { tags: ['learn'], revalidate: 3600 }
+    { tags: ['learn'], revalidate: 60 }
 );
+
+export async function getLearnResources(): Promise<LearnResource[]> {
+    return process.env.NODE_ENV === 'development'
+        ? fetchLearnResourcesRaw()
+        : getLearnResourcesCached();
+}
 
 function mapRecordToBlogPost(record: any): BlogPost {
     // Helper to safely extract attachment URLs array
@@ -325,10 +366,14 @@ function mapRecordToBlogPost(record: any): BlogPost {
             .replace(/`{3}[\s\S]*?`{3}/g, '') // Remove code blocks
             .replace(/`(.+?)`/g, '$1') // Remove inline code
             .replace(/{{image:\d+}}/g, '') // Remove our custom image tags
-            .replace(/\n+/g, ' '); // Inline newlines
+            .replace(/{{video(?::[^}]+)?}}/g, '') // Remove custom video tags
+            .replace(/\s+/g, ' ')
+            .trim();
 
         if (plainText.length > 160) {
-            excerpt = plainText.substring(0, 160).trim() + "...";
+            const cut = plainText.substring(0, 160);
+            const lastSpace = cut.lastIndexOf(' ');
+            excerpt = (lastSpace > 100 ? cut.substring(0, lastSpace) : cut).trim() + "...";
         } else {
             excerpt = plainText;
         }
@@ -369,7 +414,143 @@ function mapRecordToBlogPost(record: any): BlogPost {
         videoUrl: videoUrl,
         readTime: readTime,
         contentImages,
+        likes: Math.max(0, Number(record.get('Likes') || 0)),
     };
+}
+
+export async function getPostComments(slug: string): Promise<BlogComment[]> {
+    if (!base) return [];
+
+    try {
+        const tableId = commentsTableId || 'Comments';
+        const decodedSlug = decodeURIComponent(slug);
+        const escapedSlug = decodedSlug.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        const records = await base(tableId).select({
+            filterByFormula: `{PostSlug} = '${escapedSlug}'`,
+        }).all();
+
+        return records
+            .filter(record => {
+                const status = (record.get('Status') as string | undefined)?.trim().toLowerCase();
+                return !status || status === 'approved';
+            })
+            .map(record => ({
+                id: record.id,
+                author: String(record.get('Author') || 'Anonymous'),
+                body: String(record.get('Body') || ''),
+                postSlug: String(record.get('PostSlug') || decodedSlug),
+                postTitle: record.get('PostTitle') ? String(record.get('PostTitle')) : undefined,
+                createdAt: (record as unknown as { _rawJson?: { createdTime?: string } })._rawJson?.createdTime || new Date().toISOString(),
+            }))
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    } catch (error) {
+        console.error("Error fetching blog comments from Airtable:", error);
+        return [];
+    }
+}
+
+export async function createPostComment(data: {
+    postSlug: string;
+    postTitle?: string;
+    author: string;
+    body: string;
+}): Promise<{ success: true; comment: BlogComment } | { success: false; error: string }> {
+    if (!base) {
+        return { success: false, error: "Database connection failed" };
+    }
+
+    try {
+        const tableId = commentsTableId || 'Comments';
+        const created = await base(tableId).create([
+            {
+                fields: {
+                    Author: data.author.trim(),
+                    Body: data.body.trim(),
+                    PostSlug: decodeURIComponent(data.postSlug),
+                    ...(data.postTitle ? { PostTitle: data.postTitle } : {}),
+                    Status: 'Approved',
+                }
+            }
+        ], { typecast: true });
+
+        const record = created[0];
+        return {
+            success: true,
+            comment: {
+                id: record.id,
+                author: String(record.get('Author') || data.author.trim()),
+                body: String(record.get('Body') || data.body.trim()),
+                postSlug: String(record.get('PostSlug') || data.postSlug),
+                postTitle: record.get('PostTitle') ? String(record.get('PostTitle')) : data.postTitle,
+                createdAt: (record as unknown as { _rawJson?: { createdTime?: string } })._rawJson?.createdTime || new Date().toISOString(),
+            },
+        };
+    } catch (error: unknown) {
+        console.error("Error creating comment in Airtable:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to save comment.",
+        };
+    }
+}
+
+export async function getPostLikes(slug: string): Promise<number | null> {
+    if (!base || !blogTableId) return null;
+    try {
+        const decodedSlug = decodeURIComponent(slug);
+        const escapedSlug = decodedSlug.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const records = await base(blogTableId).select({
+            filterByFormula: `{Slug} = '${escapedSlug}'`,
+            maxRecords: 1,
+        }).firstPage();
+        if (records.length === 0) return null;
+        return Math.max(0, Number(records[0].get('Likes') || 0));
+    } catch (error) {
+        console.error("Error fetching likes from Airtable:", error);
+        return null;
+    }
+}
+
+export async function updatePostLikes(
+    slug: string,
+    delta: 1 | -1
+): Promise<{ success: true; likes: number } | { success: false; error: string }> {
+    if (!base || !blogTableId) {
+        return { success: false, error: "Database connection failed" };
+    }
+
+    try {
+        const decodedSlug = decodeURIComponent(slug);
+        const escapedSlug = decodedSlug.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const records = await base(blogTableId).select({
+            filterByFormula: `{Slug} = '${escapedSlug}'`,
+            maxRecords: 1,
+        }).firstPage();
+
+        if (records.length === 0) {
+            return { success: false, error: "Article not found" };
+        }
+
+        const record = records[0];
+        const current = Math.max(0, Number(record.get('Likes') || 0));
+        const next = Math.max(0, current + delta);
+
+        await base(blogTableId).update([
+            {
+                id: record.id,
+                fields: { Likes: next },
+            }
+        ]);
+
+        return { success: true, likes: next };
+    } catch (error: unknown) {
+        console.error("Error updating likes in Airtable:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to update likes.",
+        };
+    }
 }
 
 export async function submitIdea(data: {

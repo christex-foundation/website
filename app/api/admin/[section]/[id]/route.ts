@@ -6,7 +6,7 @@ import {
   updateAdminRecord,
 } from "@/lib/airtable-admin"
 
-const VALID_SECTIONS: AdminSection[] = ["blog", "events", "learn", "ideas"]
+const VALID_SECTIONS: AdminSection[] = ["blog", "events", "learn", "ideas", "comments"]
 const RECORD_ID_RE = /^rec[a-zA-Z0-9]+$/
 
 function parseSection(raw: string): AdminSection | null {
