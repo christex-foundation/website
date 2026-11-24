@@ -10,6 +10,7 @@ import remarkGfm from 'remark-gfm'
 import { Button } from "@/components/ui/button"
 import { SharePostButton } from "@/components/share-post-button"
 import { BlogComments, BlogLikeButton } from "@/components/blog-engagement"
+import { NewsletterSubscribeCard } from "@/components/newsletter-subscribe-card"
 import type { Metadata } from "next"
 
 const SITE_URL = "https://christex.foundation"
@@ -259,6 +260,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                                 excerpt={post.excerpt}
                             />
                         </div>
+                    </div>
+
+                    {/* Newsletter Subscribe Box */}
+                    <div className="mt-10">
+                        <NewsletterSubscribeCard
+                            source="blog-post"
+                            heading="Get our next article in your inbox"
+                            description="Subscribe to the Christex Foundation newsletter and be the first to read new stories when they drop."
+                        />
                     </div>
 
                     {/* Comments Section */}

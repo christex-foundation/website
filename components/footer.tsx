@@ -20,6 +20,7 @@ const footerLinks = {
     { label: "Partners", href: "#partners" },
     { label: "Bounty Programme", href: "#" },
     { label: "Open Learning", href: "#" },
+    { label: "Newsletter", href: "/newsletter" },
     {
       label: "Media Kit",
       href: "https://drive.google.com/drive/folders/1duceU8Oi9rRBeEcQL8e5IBJpCfZ7734b?usp=sharing",

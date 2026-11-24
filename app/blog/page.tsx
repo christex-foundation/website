@@ -6,6 +6,7 @@ import Image from "next/image"
 import { getBlogPosts, BlogPost } from "@/lib/airtable"
 import { Button } from "@/components/ui/button"
 import { BlogList } from "@/components/blog-list"
+import { NewsletterSubscribeCard } from "@/components/newsletter-subscribe-card"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -102,6 +103,13 @@ export default async function BlogPage() {
 
             {/* Navigation & Latest Posts Grid with Filter/Search */}
             <BlogList posts={recentPosts} categories={categories} />
+
+            {/* Newsletter Subscribe Section */}
+            <section className="px-6 lg:px-12 pb-20">
+                <div className="max-w-7xl mx-auto">
+                    <NewsletterSubscribeCard source="blog-page" />
+                </div>
+            </section>
 
             <Footer />
         </main>

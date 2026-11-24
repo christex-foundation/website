@@ -34,6 +34,7 @@ const communityItems = [
   // { title: "Events", href: "/events", description: "Upcoming community gatherings." },
   // { title: "Hackathon", href: "/hackathon", description: "Participate in hackathons." },
   { title: "News", href: "/blog", description: "Latest updates and articles." },
+  { title: "Newsletter", href: "/newsletter", description: "Get new articles by email." },
 ]
 
 // Default/Fallback data

@@ -21,6 +21,7 @@ import {
   List,
   ListOrdered,
   Loader2,
+  Mail,
   PenLine,
   Plus,
   Quote,
@@ -36,6 +37,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { SharePostButton, buildPostUrl } from "@/components/share-post-button"
+import { SendNewsletterModal } from "./send-newsletter-modal"
 import {
   type PreparedImage,
   prepareImageForUpload,
@@ -139,6 +141,7 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
   const [customCategory, setCustomCategory] = useState(false)
   const [videoPromptOpen, setVideoPromptOpen] = useState(false)
   const [videoPromptUrl, setVideoPromptUrl] = useState("")
+  const [newsletterPost, setNewsletterPost] = useState<AdminBlogRecord | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const coverInputRef = useRef<HTMLInputElement | null>(null)
@@ -307,6 +310,10 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
         const shareSlug = savedRecord.slug || savedRecord.id
         toast.success("Article published! It is now live on the website.", {
           action: {
+            label: "Send Newsletter",
+            onClick: () => setNewsletterPost(savedRecord),
+          },
+          cancel: {
             label: "Copy link",
             onClick: () => {
               navigator.clipboard?.writeText(buildPostUrl(shareSlug))
@@ -425,6 +432,35 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
           <div className="flex items-center gap-2">
             {form.id && form.status === "Published" && form.slug && (
               <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs text-muted-foreground"
+                  onClick={() => {
+                    const matched = posts.find((p) => p.id === form.id)
+                    setNewsletterPost(
+                      matched || {
+                        id: form.id!,
+                        title: form.title,
+                        slug: form.slug,
+                        status: form.status,
+                        date: form.date,
+                        category: form.category,
+                        author: form.author,
+                        excerpt: form.excerpt,
+                        content: form.content,
+                        videoUrl: form.videoUrl,
+                        readTime: form.readTime,
+                        image: form.existingCover ? [form.existingCover] : [],
+                        contentImages: form.existingInlineImages,
+                      }
+                    )
+                  }}
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Send Newsletter</span>
+                </Button>
                 <SharePostButton
                   title={form.title}
                   slug={form.slug}
@@ -1035,6 +1071,11 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
             </div>
           </div>
         </div>
+
+        <SendNewsletterModal
+          post={newsletterPost}
+          onClose={() => setNewsletterPost(null)}
+        />
       </div>
     )
   }
@@ -1176,6 +1217,15 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
                   </Button>
                   {!isDraft && (
                     <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setNewsletterPost(post)}
+                        title="Send to newsletter subscribers"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </Button>
                       <SharePostButton
                         title={post.title}
                         slug={post.slug || post.id}
@@ -1212,6 +1262,11 @@ export function BlogManager({ posts, loading, onRefresh }: BlogManagerProps) {
           })}
         </div>
       )}
+
+      <SendNewsletterModal
+        post={newsletterPost}
+        onClose={() => setNewsletterPost(null)}
+      />
     </div>
   )
 }

@@ -8,6 +8,7 @@ const blogTableId = process.env.AIRTABLE_BLOG_TABLE_ID;
 const galleryTableId = process.env.AIRTABLE_GALLERY_TABLE_ID;
 const ideasTableId = process.env.AIRTABLE_IDEAS_TABLE_ID;
 const commentsTableId = process.env.AIRTABLE_COMMENTS_TABLE_ID;
+const subscribersTableId = process.env.AIRTABLE_SUBSCRIBERS_TABLE_ID;
 
 // Fail gracefully if keys are not present (during build or dev without keys)
 const base = (baseId && apiKey)
@@ -47,6 +48,15 @@ export interface BlogComment {
     body: string;
     postSlug: string;
     postTitle?: string;
+    createdAt: string;
+}
+
+export interface NewsletterSubscriber {
+    id: string;
+    email: string;
+    name?: string;
+    status: string;
+    source?: string;
     createdAt: string;
 }
 
@@ -550,6 +560,172 @@ export async function updatePostLikes(
             success: false,
             error: error instanceof Error ? error.message : "Failed to update likes.",
         };
+    }
+}
+
+export async function subscribeToNewsletter(data: {
+    email: string;
+    name?: string;
+    source?: string;
+}): Promise<
+    | { success: true; alreadySubscribed: boolean; reactivated: boolean; subscriber: NewsletterSubscriber }
+    | { success: false; error: string }
+> {
+    if (!base) {
+        return { success: false, error: "Database connection failed" };
+    }
+
+    try {
+        const tableId = subscribersTableId || 'Subscribers';
+        const normalizedEmail = data.email.trim().toLowerCase();
+        const escapedEmail = normalizedEmail.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        const existing = await base(tableId).select({
+            filterByFormula: `LOWER({Email}) = '${escapedEmail}'`,
+            maxRecords: 1,
+        }).firstPage();
+
+        if (existing.length > 0) {
+            const record = existing[0];
+            const currentStatus = String(record.get('Status') || 'Subscribed').trim().toLowerCase();
+            if (currentStatus === 'subscribed') {
+                return {
+                    success: true,
+                    alreadySubscribed: true,
+                    reactivated: false,
+                    subscriber: {
+                        id: record.id,
+                        email: String(record.get('Email') || normalizedEmail),
+                        name: record.get('Name') ? String(record.get('Name')) : undefined,
+                        status: 'Subscribed',
+                        source: record.get('Source') ? String(record.get('Source')) : undefined,
+                        createdAt: (record as unknown as { _rawJson?: { createdTime?: string } })._rawJson?.createdTime || new Date().toISOString(),
+                    },
+                };
+            }
+
+            const updateFields: Record<string, string> = { Status: 'Subscribed' };
+            if (data.name?.trim()) updateFields.Name = data.name.trim();
+            if (data.source?.trim()) updateFields.Source = data.source.trim();
+
+            const updated = await base(tableId).update([
+                { id: record.id, fields: updateFields }
+            ], { typecast: true });
+
+            const updatedRec = updated[0];
+            return {
+                success: true,
+                alreadySubscribed: false,
+                reactivated: true,
+                subscriber: {
+                    id: updatedRec.id,
+                    email: String(updatedRec.get('Email') || normalizedEmail),
+                    name: updatedRec.get('Name') ? String(updatedRec.get('Name')) : undefined,
+                    status: 'Subscribed',
+                    source: updatedRec.get('Source') ? String(updatedRec.get('Source')) : undefined,
+                    createdAt: (updatedRec as unknown as { _rawJson?: { createdTime?: string } })._rawJson?.createdTime || new Date().toISOString(),
+                },
+            };
+        }
+
+        const fields: Record<string, string> = {
+            Email: normalizedEmail,
+            Status: 'Subscribed',
+        };
+        if (data.name?.trim()) fields.Name = data.name.trim();
+        if (data.source?.trim()) fields.Source = data.source.trim();
+
+        const created = await base(tableId).create([{ fields }], { typecast: true });
+        const record = created[0];
+        return {
+            success: true,
+            alreadySubscribed: false,
+            reactivated: false,
+            subscriber: {
+                id: record.id,
+                email: String(record.get('Email') || normalizedEmail),
+                name: record.get('Name') ? String(record.get('Name')) : undefined,
+                status: 'Subscribed',
+                source: record.get('Source') ? String(record.get('Source')) : undefined,
+                createdAt: (record as unknown as { _rawJson?: { createdTime?: string } })._rawJson?.createdTime || new Date().toISOString(),
+            },
+        };
+    } catch (error: unknown) {
+        console.error("Error subscribing to newsletter in Airtable:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to save subscription.",
+        };
+    }
+}
+
+export async function unsubscribeFromNewsletter(email: string): Promise<{ success: boolean; error?: string }> {
+    if (!base) {
+        return { success: false, error: "Database connection failed" };
+    }
+
+    try {
+        const tableId = subscribersTableId || 'Subscribers';
+        const normalizedEmail = email.trim().toLowerCase();
+        const escapedEmail = normalizedEmail.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        const existing = await base(tableId).select({
+            filterByFormula: `LOWER({Email}) = '${escapedEmail}'`,
+        }).all();
+
+        if (existing.length === 0) {
+            return { success: true };
+        }
+
+        for (let i = 0; i < existing.length; i += 10) {
+            const batch = existing.slice(i, i + 10);
+            await base(tableId).update(
+                batch.map((record) => ({ id: record.id, fields: { Status: 'Unsubscribed' } })),
+                { typecast: true }
+            );
+        }
+
+        return { success: true };
+    } catch (error: unknown) {
+        console.error("Error unsubscribing in Airtable:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to unsubscribe.",
+        };
+    }
+}
+
+export async function getActiveSubscribers(): Promise<NewsletterSubscriber[]> {
+    if (!base) return [];
+
+    try {
+        const tableId = subscribersTableId || 'Subscribers';
+        const records = await base(tableId).select().all();
+
+        const seen = new Set<string>();
+        const subscribers: NewsletterSubscriber[] = [];
+
+        for (const record of records) {
+            const rawEmail = String(record.get('Email') || '').trim().toLowerCase();
+            if (!rawEmail || seen.has(rawEmail)) continue;
+            const status = String(record.get('Status') || 'Subscribed').trim().toLowerCase();
+            if (status !== 'subscribed') continue;
+
+            seen.add(rawEmail);
+            subscribers.push({
+                id: record.id,
+                email: rawEmail,
+                name: record.get('Name') ? String(record.get('Name')).trim() : undefined,
+                status: 'Subscribed',
+                source: record.get('Source') ? String(record.get('Source')) : undefined,
+                createdAt: (record as unknown as { _rawJson?: { createdTime?: string } })._rawJson?.createdTime || new Date().toISOString(),
+            });
+        }
+
+        return subscribers;
+    } catch (error) {
+        console.warn("Subscribers table not available yet in Airtable:", error);
+        return [];
     }
 }
 

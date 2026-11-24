@@ -13,6 +13,7 @@ import {
   Loader2,
   Lock,
   LogOut,
+  Mail,
   MessageSquare,
   RefreshCw,
   ExternalLink,
@@ -24,6 +25,7 @@ import type {
   AdminIdeaRecord,
   AdminLearnRecord,
   AdminSection,
+  AdminSubscriberRecord,
 } from "@/lib/airtable-admin"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +34,7 @@ import { EventsManager } from "./events-manager"
 import { LearnManager } from "./learn-manager"
 import { IdeasManager } from "./ideas-manager"
 import { CommentsManager } from "./comments-manager"
+import { SubscribersManager } from "./subscribers-manager"
 
 interface AdminShellProps {
   initialAuthenticated: boolean
@@ -53,6 +56,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
   const [learn, setLearn] = useState<AdminLearnRecord[]>([])
   const [ideas, setIdeas] = useState<AdminIdeaRecord[]>([])
   const [comments, setComments] = useState<AdminCommentRecord[]>([])
+  const [subscribers, setSubscribers] = useState<AdminSubscriberRecord[]>([])
 
   const fetchSection = useCallback(async (section: AdminSection) => {
     const res = await fetch(`/api/admin/${section}`, { cache: "no-store" })
@@ -69,6 +73,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
     if (section === "learn") setLearn(data.records || [])
     if (section === "ideas") setIdeas(data.records || [])
     if (section === "comments") setComments(data.records || [])
+    if (section === "subscribers") setSubscribers(data.records || [])
   }, [])
 
   const fetchAll = useCallback(async (syncCache = false) => {
@@ -83,6 +88,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
         fetchSection("learn"),
         fetchSection("ideas"),
         fetchSection("comments"),
+        fetchSection("subscribers"),
       ])
       if (syncCache) {
         toast.success("Synced latest Airtable data to the website.")
@@ -97,7 +103,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
   useEffect(() => {
     if (!authenticated) return
     let cancelled = false
-    const sections: AdminSection[] = ["blog", "events", "learn", "ideas", "comments"]
+    const sections: AdminSection[] = ["blog", "events", "learn", "ideas", "comments", "subscribers"]
 
     async function loadInitial() {
       try {
@@ -121,6 +127,7 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
           if (r.section === "learn") setLearn(r.records)
           if (r.section === "ideas") setIdeas(r.records)
           if (r.section === "comments") setComments(r.records)
+          if (r.section === "subscribers") setSubscribers(r.records)
         }
       } catch (err) {
         if (!cancelled) {
@@ -233,8 +240,13 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
     )
   }
 
+  const activeSubscriberCount = subscribers.filter(
+    (s) => (s.status || "Subscribed").toLowerCase() === "subscribed"
+  ).length
+
   const tabs: Array<{ id: AdminSection; label: string; count: number; icon: React.ReactNode }> = [
     { id: "blog", label: "Blog", count: posts.length, icon: <FileText className="w-4 h-4" /> },
+    { id: "subscribers", label: "Subscribers", count: activeSubscriberCount, icon: <Mail className="w-4 h-4" /> },
     { id: "comments", label: "Comments", count: comments.length, icon: <MessageSquare className="w-4 h-4" /> },
     { id: "events", label: "Events", count: events.length, icon: <Calendar className="w-4 h-4" /> },
     { id: "learn", label: "Learn", count: learn.length, icon: <BookOpen className="w-4 h-4" /> },
@@ -329,6 +341,13 @@ export function AdminShell({ initialAuthenticated, configured }: AdminShellProps
             posts={posts}
             loading={loading}
             onRefresh={() => fetchSection("blog")}
+          />
+        )}
+        {activeTab === "subscribers" && (
+          <SubscribersManager
+            subscribers={subscribers}
+            loading={loading}
+            onRefresh={() => fetchSection("subscribers")}
           />
         )}
         {activeTab === "comments" && (

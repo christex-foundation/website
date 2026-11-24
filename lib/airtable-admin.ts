@@ -1,7 +1,7 @@
 import Airtable from "airtable"
 import { revalidatePath, revalidateTag } from "next/cache"
 
-export type AdminSection = "blog" | "events" | "learn" | "ideas" | "comments"
+export type AdminSection = "blog" | "events" | "learn" | "ideas" | "comments" | "subscribers"
 
 export interface AdminAttachment {
   id: string
@@ -70,6 +70,15 @@ export interface AdminCommentRecord {
   createdTime?: string
 }
 
+export interface AdminSubscriberRecord {
+  id: string
+  email: string
+  name: string
+  status: string
+  source: string
+  createdTime?: string
+}
+
 function getAirtableConfig() {
   const apiKey = process.env.AIRTABLE_API_KEY
   const baseId = process.env.AIRTABLE_BASE_ID
@@ -94,6 +103,8 @@ function getTableId(section: AdminSection): string {
       return process.env.AIRTABLE_IDEAS_TABLE_ID || "Ideas"
     case "comments":
       return process.env.AIRTABLE_COMMENTS_TABLE_ID || "Comments"
+    case "subscribers":
+      return process.env.AIRTABLE_SUBSCRIBERS_TABLE_ID || "Subscribers"
   }
 }
 
@@ -181,6 +192,15 @@ function mapRecord(section: AdminSection, record: { id: string; _rawJson?: { cre
         status: String(record.get("Status") || "Approved"),
         createdTime: record._rawJson?.createdTime,
       } satisfies AdminCommentRecord
+    case "subscribers":
+      return {
+        id: record.id,
+        email: String(record.get("Email") || "").trim().toLowerCase(),
+        name: String(record.get("Name") || ""),
+        status: String(record.get("Status") || "Subscribed"),
+        source: String(record.get("Source") || ""),
+        createdTime: record._rawJson?.createdTime,
+      } satisfies AdminSubscriberRecord
   }
 }
 
@@ -217,9 +237,9 @@ export async function listAdminRecords(section: AdminSection) {
   try {
     records = await base(tableId).select(selectOptions).all()
   } catch (error) {
-    // Gracefully return empty list if optional Comments table hasn't been created yet
-    if (section === "comments") {
-      console.warn("Comments table not available yet in Airtable:", error)
+    // Gracefully return empty list if optional Comments or Subscribers table hasn't been created yet
+    if (section === "comments" || section === "subscribers") {
+      console.warn(`${section} table not available yet in Airtable:`, error)
       return []
     }
     throw error
@@ -227,7 +247,7 @@ export async function listAdminRecords(section: AdminSection) {
 
   const mapped = records.map((r) => mapRecord(section, r as unknown as Parameters<typeof mapRecord>[1]))
 
-  if (section === "ideas" || section === "comments") {
+  if (section === "ideas" || section === "comments" || section === "subscribers") {
     return (mapped as Array<{ createdTime?: string }>).sort((a, b) =>
       (b.createdTime || "").localeCompare(a.createdTime || "")
     )
@@ -320,6 +340,14 @@ function buildAirtableFields(
     setString("PostSlug", "postSlug")
     setString("PostTitle", "postTitle")
     setString("Status", "status")
+  } else if (section === "subscribers") {
+    if ("email" in input && typeof input.email === "string") {
+      const normalized = input.email.trim().toLowerCase()
+      if (normalized) fields["Email"] = normalized
+    }
+    setString("Name", "name")
+    setString("Status", "status")
+    setString("Source", "source")
   }
 
   return fields
@@ -358,6 +386,18 @@ const ALLOWED_ATTACHMENT_FIELDS: Record<AdminSection, string[]> = {
   learn: ["Thumbnail"],
   ideas: [],
   comments: [],
+  subscribers: [],
+}
+
+export async function getAdminBlogRecordById(recordId: string): Promise<AdminBlogRecord | null> {
+  const base = getBase()
+  const tableId = getTableId("blog")
+  try {
+    const record = await base(tableId).find(recordId)
+    return mapRecord("blog", record as unknown as Parameters<typeof mapRecord>[1]) as AdminBlogRecord
+  } catch {
+    return null
+  }
 }
 
 export async function uploadAdminAttachment(params: {
